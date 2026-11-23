@@ -23,8 +23,16 @@ describe("safeNext", () => {
     ["\\/evil.com"],
     ["javascript:alert(1)"],
     ["evil.com"],
+    ["/.//evil.com"],
+    ["/a/..//evil.com"],
+    ["/%2e//evil.com"],
+    ["/./\\evil.com"],
   ])("rechaza %j", (input) => {
     expect(safeNext(input)).toBe("/")
+  })
+
+  it("normaliza segmentos inofensivos", () => {
+    expect(safeNext("/tareas/../gastos")).toBe("/gastos")
   })
 
   it("usa el fallback indicado", () => {
