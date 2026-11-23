@@ -15,6 +15,9 @@ const atkinson = Atkinson_Hyperlegible_Next({
   subsets: ["latin", "latin-ext"],
   variable: "--font-text",
   display: "swap",
+  // Next no trae métricas de esta fuente para ajustar el respaldo.
+  adjustFontFallback: false,
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
 })
 
 export const metadata: Metadata = {
