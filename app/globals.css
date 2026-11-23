@@ -277,6 +277,11 @@
   66% { opacity: 0.8; }
 }
 
+@keyframes cat-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
 @keyframes zzz {
   0% { transform: translate(0, 0); opacity: 0; }
   30% { opacity: 1; }
@@ -297,6 +302,11 @@
 
 @utility animate-blink-3 {
   animation: blink-3 1.2s steps(3) infinite;
+}
+
+/* Salto cuadro a cuadro; el segundo michi lleva un delay para alternar. */
+@utility animate-cat-hop {
+  animation: cat-hop 700ms steps(2, jump-none) infinite;
 }
 
 @utility animate-zzz {

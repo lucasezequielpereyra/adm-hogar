@@ -9,8 +9,8 @@ import { Michi } from "@/components/pixel/michi"
 const ITEMS = [
   { href: "/", label: "Inicio", icon: Home, match: (p: string) => p === "/" },
   { href: "/tareas", label: "Tareas", icon: CheckboxOn, match: (p: string) => p.startsWith("/tareas") },
-  { href: "/compras", label: "Compras", icon: ShoppingCart, match: (p: string) => p.startsWith("/compras") },
-  { href: "/gastos", label: "Gastos", icon: CreditCard, match: (p: string) => p.startsWith("/gastos") },
+  { href: "/compras/mes", label: "Compras", icon: ShoppingCart, match: (p: string) => p.startsWith("/compras") },
+  { href: "/gastos/tarjetas", label: "Gastos", icon: CreditCard, match: (p: string) => p.startsWith("/gastos") },
   { href: "/mas", label: "Más", icon: MoreHorizontal, match: (p: string) => p.startsWith("/mas") },
 ]
 

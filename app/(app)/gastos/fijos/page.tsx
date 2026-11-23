@@ -7,6 +7,8 @@ import { FixedMonthView } from "@/features/fixed/components/fixed-month-view"
 import { fixedTotals, getFixedForMonth } from "@/features/fixed/queries"
 import { memberOptions } from "@/features/tasks/page-data"
 import { monthOf, todayISO } from "@/lib/domain/dates"
+import { after } from "next/server"
+import { sweepStaleCategorizations } from "@/lib/ai/run"
 import { getHouseholdContext } from "@/lib/session"
 
 export const metadata = { title: "Gastos fijos" }
@@ -14,6 +16,8 @@ export const metadata = { title: "Gastos fijos" }
 export default async function FijosPage({ searchParams }: { searchParams: Promise<{ mes?: string; revisar?: string }> }) {
   const sp = await searchParams
   const ctx = await getHouseholdContext()
+  // Reencola categorizaciones trabadas (si un after() anterior se cortó).
+  after(() => sweepStaleCategorizations(ctx.household.id).catch((e) => console.error("[ai] sweep", e)))
   const today = todayISO(ctx.household.timezone)
   const current = monthOf(today)
   const month = monthFromParam(sp.mes, current)

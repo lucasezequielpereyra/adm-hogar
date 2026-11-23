@@ -13,6 +13,8 @@ import { byCategory, getCardDashboard, sumByCurrency } from "@/features/cards/qu
 import { getCategories } from "@/features/categories/queries"
 import { todayISO } from "@/lib/domain/dates"
 import { formatAmountInput } from "@/lib/domain/money"
+import { after } from "next/server"
+import { sweepStaleCategorizations } from "@/lib/ai/run"
 import { getHouseholdContext } from "@/lib/session"
 import { createClient } from "@/lib/supabase/server"
 
@@ -28,6 +30,8 @@ export default async function TarjetasPage({
   const sp = await searchParams
   const offset = Math.max(-24, Math.min(12, Number.parseInt(sp.p ?? "0", 10) || 0))
   const ctx = await getHouseholdContext()
+  // Reencola categorizaciones trabadas (si un after() anterior se cortó).
+  after(() => sweepStaleCategorizations(ctx.household.id).catch((e) => console.error("[ai] sweep", e)))
   const today = todayISO(ctx.household.timezone)
   const [dash, categories] = await Promise.all([getCardDashboard(ctx.household.id, today, offset), getCategories(ctx.household.id)])
 
