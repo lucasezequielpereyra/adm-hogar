@@ -15,7 +15,8 @@ export const fixedSchema = z.object({
   currency: z.enum(["ARS", "USD"]),
   due_day: z.number({ message: "Elegí un día." }).int().min(1, "Entre 1 y 31.").max(31, "Entre 1 y 31."),
   payment_method: z.enum(Object.keys(PAYMENT_METHODS) as [keyof typeof PAYMENT_METHODS, ...(keyof typeof PAYMENT_METHODS)[]]),
-  responsible_id: z.uuid().nullable(),
+  /** Uno o varios (o nadie). Un gasto personal solo puede tener a su dueño. */
+  responsible_ids: z.array(z.uuid()).max(16),
   category_id: z.uuid().nullable(),
   is_active: z.boolean(),
   is_private: z.boolean(),

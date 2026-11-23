@@ -182,9 +182,13 @@ from (values
 ) as p(name, kind, priority, price, currency, url, notes, who, priv, cat);
 
 -- ── Gastos fijos ────────────────────────────────────────────────────
-insert into public.fixed_expenses (id, household_id, name, amount, currency, due_day, payment_method, responsible_id,
+insert into public.fixed_expenses (id, household_id, name, amount, currency, due_day, payment_method, responsible_ids,
   is_private, category_id, category_source, created_by)
-select f.id, 'cccccccc-0000-4000-8000-000000000001', f.name, f.amount, f.currency, f.due_day, f.method, f.who, f.priv,
+select f.id, 'cccccccc-0000-4000-8000-000000000001', f.name, f.amount, f.currency, f.due_day, f.method,
+       -- El alquiler lo pagan entre los dos.
+       case when f.name = 'Alquiler' then array['aaaaaaaa-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000002']::uuid[]
+            else array[f.who] end,
+       f.priv,
        (select c.id from public.categories c where c.household_id = 'cccccccc-0000-4000-8000-000000000001' and c.name = f.cat),
        'user', coalesce(f.who, 'aaaaaaaa-0000-4000-8000-000000000001')
 from (values

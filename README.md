@@ -191,6 +191,11 @@ supabase/tests/         tests pgTAP
 **Tareas:**
 - Frecuencias: única, diaria, semanal (días elegidos), **quincenal** (cada 2 semanas en los días elegidos, con una fecha ancla) y mensual (el día 31 se recorta).
 - Completar es una RPC atómica que crea la próxima ocurrencia. Es idempotente frente al doble tap y se puede deshacer.
+- Quien completa una tarea queda como su responsable (aunque estuviera asignada a otro o a nadie). La próxima ocurrencia conserva la asignación original, y deshacer la restaura.
+- Las tareas sin asignar son de todos: aparecen en "Mis tareas" y en Inicio de cada miembro.
+
+**Gastos fijos:**
+- Pueden tener varios responsables (`responsible_ids`). Un trigger valida que sean miembros del hogar y que un gasto personal solo tenga a su dueño; quien deja el hogar sale de las listas.
 
 ### Categorización con IA (`lib/ai`)
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "cn"
-import { Lock, Repeat } from "pixelarticons/react"
+import { Lock, Repeat, Users } from "pixelarticons/react"
 import { useOptimistic, useTransition } from "react"
 import { toast } from "sonner"
 import { useCoinPop } from "@/components/pixel/coin-pop"
@@ -107,6 +107,12 @@ export function TaskRow({
             <span className="inline-flex items-center gap-1">
               <Lock className="size-4" aria-hidden />
               Personal
+            </span>
+          )}
+          {!task.assigned_to && !task.is_private && !done && (
+            <span className="inline-flex items-center gap-1">
+              <Users className="size-4" aria-hidden />
+              Cualquiera
             </span>
           )}
         </span>

@@ -59,7 +59,8 @@ export async function getTasks(
 
   const base = () => {
     let q = supabase.from("tasks").select(TASK_FIELDS).eq("household_id", householdId)
-    if (filters.view === "mias") q = q.eq("assigned_to", userId)
+    // "Mis tareas": las mías y las que no tienen a nadie asignado (son de todos).
+    if (filters.view === "mias") q = q.or(`assigned_to.eq.${userId},assigned_to.is.null`)
     else if (filters.memberId === "sin-asignar") q = q.is("assigned_to", null)
     else if (filters.memberId) q = q.eq("assigned_to", filters.memberId)
     if (categoryIds) q = q.in("task_category_id", categoryIds)

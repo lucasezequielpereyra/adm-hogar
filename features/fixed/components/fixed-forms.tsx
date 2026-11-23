@@ -2,10 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Trash } from "pixelarticons/react"
-import { useTransition } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useState, useTransition } from "react"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/form/confirm-dialog"
 import { FormField } from "@/components/form/form-field"
+import { MemberAvatar } from "@/components/pixel/member-chip"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,8 +22,6 @@ import { formatAmountInput } from "@/lib/domain/money"
 import { deleteFixed, payFixed, saveFixed } from "../actions"
 import { fixedSchema, PAYMENT_METHODS, paymentSchema, type FixedValues, type PaymentValues } from "../schemas"
 import type { FixedExpense, FixedWithPayment } from "../types"
-
-const NONE = "__none__"
 
 export function FixedForm({
   item,
@@ -39,6 +39,7 @@ export function FixedForm({
   onDone: () => void
 }) {
   const [pending, startTransition] = useTransition()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const form = useForm<FixedValues>({
     resolver: zodResolver(fixedSchema),
     defaultValues: item
@@ -48,7 +49,7 @@ export function FixedForm({
           currency: item.currency as FixedValues["currency"],
           due_day: item.due_day,
           payment_method: item.payment_method as FixedValues["payment_method"],
-          responsible_id: item.responsible_id,
+          responsible_ids: item.responsible_ids,
           category_id: item.category_source === "user" ? item.category_id : null,
           is_active: item.is_active,
           is_private: item.is_private,
@@ -60,7 +61,7 @@ export function FixedForm({
           currency: defaultCurrency,
           due_day: 10,
           payment_method: "debito",
-          responsible_id: currentUserId,
+          responsible_ids: [currentUserId],
           category_id: null,
           is_active: true,
           is_private: false,
@@ -68,6 +69,7 @@ export function FixedForm({
         },
   })
   const { errors } = form.formState
+  const isPrivate = useWatch({ control: form.control, name: "is_private" })
 
   return (
     <form
@@ -150,25 +152,27 @@ export function FixedForm({
           )}
         />
       </FormField>
-      <FormField id="fx-resp" label="Responsable">
+      <FormField id="fx-resp" label="Responsables" hint={isPrivate ? "Es personal: solo vos." : "Podés elegir a varios, o a nadie."}>
         <Controller
           control={form.control}
-          name="responsible_id"
+          name="responsible_ids"
           render={({ field }) => (
-            <Select value={field.value ?? NONE} onValueChange={(v) => field.onChange(v === NONE ? null : v)}>
-              <SelectTrigger id="fx-resp">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>Nadie en particular</SelectItem>
-                {members.map((m) => (
-                  <SelectItem key={m.user_id} value={m.user_id}>
-                    {m.name}
-                    {m.user_id === currentUserId ? " (vos)" : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ToggleGroup
+              id="fx-resp"
+              type="multiple"
+              value={field.value}
+              onValueChange={field.onChange}
+              aria-label="Responsables"
+              className="flex-wrap"
+            >
+              {(isPrivate ? members.filter((m) => m.user_id === currentUserId) : members).map((m) => (
+                <ToggleGroupItem key={m.user_id} value={m.user_id} size="sm" className="gap-2">
+                  <MemberAvatar name={m.name} color={m.color} size={20} />
+                  {m.name}
+                  {m.user_id === currentUserId ? " (vos)" : ""}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           )}
         />
       </FormField>
@@ -180,7 +184,20 @@ export function FixedForm({
         <Label htmlFor="fx-active">Activo</Label>
       </div>
       <div className="flex items-center gap-3">
-        <Controller control={form.control} name="is_private" render={({ field }) => <Switch id="fx-private" checked={field.value} onCheckedChange={field.onChange} />} />
+        <Controller
+          control={form.control}
+          name="is_private"
+          render={({ field }) => (
+            <Switch
+              id="fx-private"
+              checked={field.value}
+              onCheckedChange={(on) => {
+                field.onChange(on)
+                if (on) form.setValue("responsible_ids", form.getValues("responsible_ids").filter((uid) => uid === currentUserId))
+              }}
+            />
+          )}
+        />
         <Label htmlFor="fx-private">Personal (solo lo ves vos)</Label>
       </div>
       <div className="flex gap-4 pt-2">
@@ -188,28 +205,42 @@ export function FixedForm({
           {pending ? "Guardando…" : item ? "Guardar cambios" : "Crear gasto fijo"}
         </Button>
         {item && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            aria-label="Borrar gasto fijo"
-            disabled={pending}
-            onClick={() => {
-              if (!window.confirm(`¿Borrar "${item.name}" y su historial de pagos?`)) return
-              startTransition(async () => {
-                const res = await deleteFixed(item.id)
-                if (res.ok) {
-                  toast.success("Gasto fijo borrado")
-                  onDone()
-                } else toast.error(res.error)
-              })
-            }}
-          >
-            <Trash aria-hidden />
+          <Button type="button" variant="destructive" disabled={pending} onClick={() => setConfirmDelete(true)}>
+            <Trash aria-hidden /> Borrar
           </Button>
         )}
       </div>
+      {item && <FixedDeleteDialog item={item} open={confirmDelete} onOpenChange={setConfirmDelete} onDeleted={onDone} />}
     </form>
+  )
+}
+
+/** Confirmación para borrar un gasto fijo (desde el formulario o desde el menú de la tarjeta). */
+export function FixedDeleteDialog({
+  item,
+  open,
+  onOpenChange,
+  onDeleted,
+}: {
+  item: Pick<FixedExpense, "id" | "name">
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onDeleted?: () => void
+}) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`¿Borrar "${item.name}"?`}
+      description="Se borra también su historial de pagos. Si solo dejó de pagarse, podés desactivarlo desde Editar y queda el historial."
+      onConfirm={async () => {
+        const res = await deleteFixed(item.id)
+        if (res.ok) {
+          toast.success("Gasto fijo borrado")
+          onDeleted?.()
+        } else toast.error(res.error)
+      }}
+    />
   )
 }
 

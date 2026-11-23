@@ -319,14 +319,14 @@ isOneToOne: false
                   ]
                 },"fixed_expenses": {
                   Row: {
-                    "ai_confidence": number | null,"ai_reason": string | null,"amount": number,"card_id": string | null,"categorization_status": string,"category_id": string | null,"category_source": string | null,"created_at": string,"created_by": string | null,"currency": string,"due_day": number,"household_id": string,"id": string,"is_active": boolean,"is_private": boolean,"name": string,"needs_review": boolean,"notes": string | null,"payment_method": string,"responsible_id": string | null,"updated_at": string
+                    "ai_confidence": number | null,"ai_reason": string | null,"amount": number,"card_id": string | null,"categorization_status": string,"category_id": string | null,"category_source": string | null,"created_at": string,"created_by": string | null,"currency": string,"due_day": number,"household_id": string,"id": string,"is_active": boolean,"is_private": boolean,"name": string,"needs_review": boolean,"notes": string | null,"payment_method": string,"responsible_ids": (string)[],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "ai_confidence"?: number | null,"ai_reason"?: string | null,"amount": number,"card_id"?: string | null,"categorization_status"?: string,"category_id"?: string | null,"category_source"?: string | null,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"due_day": number,"household_id": string,"id"?: string,"is_active"?: boolean,"is_private"?: boolean,"name": string,"needs_review"?: boolean,"notes"?: string | null,"payment_method"?: string,"responsible_id"?: string | null,"updated_at"?: string
+                    "ai_confidence"?: number | null,"ai_reason"?: string | null,"amount": number,"card_id"?: string | null,"categorization_status"?: string,"category_id"?: string | null,"category_source"?: string | null,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"due_day": number,"household_id": string,"id"?: string,"is_active"?: boolean,"is_private"?: boolean,"name": string,"needs_review"?: boolean,"notes"?: string | null,"payment_method"?: string,"responsible_ids"?: (string)[],"updated_at"?: string
                   }
                   Update: {
-                    "ai_confidence"?: number | null,"ai_reason"?: string | null,"amount"?: number,"card_id"?: string | null,"categorization_status"?: string,"category_id"?: string | null,"category_source"?: string | null,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"due_day"?: number,"household_id"?: string,"id"?: string,"is_active"?: boolean,"is_private"?: boolean,"name"?: string,"needs_review"?: boolean,"notes"?: string | null,"payment_method"?: string,"responsible_id"?: string | null,"updated_at"?: string
+                    "ai_confidence"?: number | null,"ai_reason"?: string | null,"amount"?: number,"card_id"?: string | null,"categorization_status"?: string,"category_id"?: string | null,"category_source"?: string | null,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"due_day"?: number,"household_id"?: string,"id"?: string,"is_active"?: boolean,"is_private"?: boolean,"name"?: string,"needs_review"?: boolean,"notes"?: string | null,"payment_method"?: string,"responsible_ids"?: (string)[],"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -353,12 +353,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "households"
       referencedColumns: ["id"]
-    },{
-      foreignKeyName: "fixed_expenses_household_id_responsible_id_fkey"
-      columns: ["household_id","responsible_id"]
-isOneToOne: false
-      referencedRelation: "household_members"
-      referencedColumns: ["household_id","user_id"]
     }
                   ]
                 },"household_members": {
@@ -607,14 +601,14 @@ isOneToOne: false
                   ]
                 },"task_completions": {
                   Row: {
-                    "completed_at": string,"completed_by": string | null,"created_at": string,"created_by": string | null,"household_id": string,"id": string,"next_task_id": string | null,"task_id": string,"updated_at": string
+                    "completed_at": string,"completed_by": string | null,"created_at": string,"created_by": string | null,"household_id": string,"id": string,"next_task_id": string | null,"previous_assigned_to": string | null,"reassigned": boolean,"task_id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "completed_at"?: string,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"household_id": string,"id"?: string,"next_task_id"?: string | null,"task_id": string,"updated_at"?: string
+                    "completed_at"?: string,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"household_id": string,"id"?: string,"next_task_id"?: string | null,"previous_assigned_to"?: string | null,"reassigned"?: boolean,"task_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "completed_at"?: string,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"household_id"?: string,"id"?: string,"next_task_id"?: string | null,"task_id"?: string,"updated_at"?: string
+                    "completed_at"?: string,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"household_id"?: string,"id"?: string,"next_task_id"?: string | null,"previous_assigned_to"?: string | null,"reassigned"?: boolean,"task_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -646,6 +640,12 @@ isOneToOne: false
       columns: ["next_task_id"]
 isOneToOne: false
       referencedRelation: "tasks"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "task_completions_previous_assigned_to_fkey"
+      columns: ["previous_assigned_to"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]

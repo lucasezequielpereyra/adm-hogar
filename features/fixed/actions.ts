@@ -25,7 +25,8 @@ export async function saveFixed(id: string | null, values: FixedValues): Promise
     currency: v.currency,
     due_day: v.due_day,
     payment_method: v.payment_method,
-    responsible_id: v.responsible_id,
+    // Personal: solo vos podés ser responsable (la base también lo valida).
+    responsible_ids: v.is_private ? v.responsible_ids.filter((uid) => uid === ctx.user.id) : [...new Set(v.responsible_ids)],
     is_active: v.is_active,
     is_private: v.is_private,
     notes: v.notes || null,

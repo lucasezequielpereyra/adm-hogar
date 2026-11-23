@@ -2,7 +2,7 @@
 
 import { cn } from "cn"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Check, Lock, Plus, Undo } from "pixelarticons/react"
+import { Check, Lock, MoreVertical, Pencil, Plus, Trash, Undo } from "pixelarticons/react"
 import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { MemberAvatar } from "@/components/pixel/member-chip"
@@ -11,6 +11,7 @@ import { Panel } from "@/components/pixel/panel"
 import { SegmentedBar } from "@/components/pixel/segmented-bar"
 import { Button } from "@/components/ui/button"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { CategoryChip } from "@/features/categories/components/category-chip"
 import type { CategoryOption } from "@/features/categories/types"
 import type { MemberOption } from "@/features/tasks/types"
@@ -20,7 +21,7 @@ import { addDaysISO } from "@/lib/domain/dates"
 import { undoPayment } from "../actions"
 import { PAYMENT_METHODS } from "../schemas"
 import type { FixedWithPayment } from "../types"
-import { FixedForm, PaymentForm } from "./fixed-forms"
+import { FixedDeleteDialog, FixedForm, PaymentForm } from "./fixed-forms"
 
 type Totals = {
   byCurrency: Record<string, { total: number; paid: number; pending: number }>
@@ -56,6 +57,8 @@ export function FixedMonthView({
   defaultCurrency: "ARS" | "USD"
 }) {
   const [drawer, setDrawer] = useState<DrawerState>(null)
+  // Fuera del menú: abrir un diálogo desde un DropdownMenuItem deja el body bloqueado.
+  const [deleting, setDeleting] = useState<FixedWithPayment | null>(null)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -147,9 +150,10 @@ export function FixedMonthView({
             item={f}
             today={today}
             isCurrentMonth={isCurrentMonth}
-            responsible={f.responsible_id ? membersById.get(f.responsible_id) : undefined}
+            responsibles={f.responsible_ids.flatMap((id) => membersById.get(id) ?? [])}
             categories={categories}
             onEdit={() => setDrawer({ kind: "edit", item: f })}
+            onDelete={() => setDeleting(f)}
             onPay={() => setDrawer({ kind: "pay", item: f })}
           />
         ))}
@@ -165,9 +169,10 @@ export function FixedMonthView({
                 item={f}
                 today={today}
                 isCurrentMonth={isCurrentMonth}
-                responsible={f.responsible_id ? membersById.get(f.responsible_id) : undefined}
+                responsibles={f.responsible_ids.flatMap((id) => membersById.get(id) ?? [])}
                 categories={categories}
                 onEdit={() => setDrawer({ kind: "edit", item: f })}
+                onDelete={() => setDeleting(f)}
                 onPay={() => setDrawer({ kind: "pay", item: f })}
               />
             ))}
@@ -225,6 +230,9 @@ export function FixedMonthView({
           </div>
         </DrawerContent>
       </Drawer>
+      {deleting && (
+        <FixedDeleteDialog item={deleting} open onOpenChange={(o) => !o && setDeleting(null)} onDeleted={() => setDeleting(null)} />
+      )}
     </div>
   )
 }
@@ -233,18 +241,20 @@ function FixedCard({
   item,
   today,
   isCurrentMonth,
-  responsible,
+  responsibles,
   categories,
   onEdit,
   onPay,
+  onDelete,
 }: {
   item: FixedWithPayment
   today: string
   isCurrentMonth: boolean
-  responsible?: MemberOption
+  responsibles: MemberOption[]
   categories: CategoryOption[]
   onEdit: () => void
   onPay: () => void
+  onDelete: () => void
 }) {
   const [pending, startTransition] = useTransition()
   const paid = !!item.payment
@@ -274,10 +284,31 @@ function FixedCard({
             </span>
           )}
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label={`Opciones de ${item.name}`} className="-mr-2 -mt-1 shrink-0">
+              <MoreVertical aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onEdit}>
+              <Pencil aria-hidden /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-ladrillo" onSelect={onDelete}>
+              <Trash aria-hidden /> Borrar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-2">
-          {responsible && <MemberAvatar name={responsible.name} color={responsible.color} size={24} />}
+          {responsibles.length > 0 && (
+            <span className="flex items-center gap-1" aria-label={`Responsables: ${responsibles.map((m) => m.name).join(", ")}`}>
+              {responsibles.map((m) => (
+                <MemberAvatar key={m.user_id} name={m.name} color={m.color} size={24} />
+              ))}
+            </span>
+          )}
           <CategoryChip
             entityType="fixed_expense"
             entityId={item.id}

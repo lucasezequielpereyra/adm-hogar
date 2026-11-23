@@ -36,7 +36,10 @@ export function fromDb(error: PostgrestError | null | undefined, fallback = "No 
     // Nuestros RAISE con 42501 traen un mensaje en español; los de RLS no.
     return fail(/row-level security|permission denied/i.test(error.message) ? "No tenés permiso para hacer eso." : error.message)
   }
-  if (error.code === "23503") return fail("Hace referencia a algo que ya no existe.")
+  if (error.code === "23503") {
+    // Los de nuestros triggers vienen en español; los de una FK, no.
+    return fail(/foreign key/i.test(error.message) ? "Hace referencia a algo que ya no existe." : error.message)
+  }
   console.error("[db]", error)
   return fail(fallback)
 }

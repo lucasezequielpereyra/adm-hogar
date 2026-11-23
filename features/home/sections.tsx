@@ -42,7 +42,7 @@ export function PanelSkeleton({ lines = 3 }: { lines?: number }) {
   )
 }
 
-/** Mis tareas de hoy y las vencidas. */
+/** Mis tareas (y las sin asignar) de hoy y las vencidas. */
 export async function TodayTasks({ ctx, today }: { ctx: HouseholdContext; today: string }) {
   const supabase = await createClient()
   const [{ data }, categories] = await Promise.all([
@@ -52,7 +52,8 @@ export async function TodayTasks({ ctx, today }: { ctx: HouseholdContext; today:
         "id, title, description, task_category_id, assigned_to, due_date, priority, status, is_private, frequency, weekdays, month_day, recurrence_anchor, created_by, completed_at, completed_by",
       )
       .eq("household_id", ctx.household.id)
-      .eq("assigned_to", ctx.user.id)
+      // Las mías y las sin asignar (son de todos).
+      .or(`assigned_to.eq.${ctx.user.id},assigned_to.is.null`)
       .eq("status", "pending")
       .lte("due_date", today)
       .order("due_date")

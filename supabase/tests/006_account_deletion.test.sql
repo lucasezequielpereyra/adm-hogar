@@ -1,7 +1,7 @@
 -- Borrar una cuenta: sus datos compartidos quedan sin dueño y el hogar sigue.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(5);
+select plan(6);
 
 -- Bruno creó tareas, compras y gastos en el seed. Se borra su cuenta.
 select lives_ok(
@@ -13,6 +13,8 @@ select ok((select count(*) from public.tasks where created_by is null and title 
   'Sus tareas compartidas quedan sin dueño');
 select is((select count(*) from public.households where id = 'cccccccc-0000-4000-8000-000000000001')::int, 1,
   'El hogar sigue existiendo');
+select is((select responsible_ids from public.fixed_expenses where name = 'Alquiler'),
+  array['aaaaaaaa-0000-4000-8000-000000000001']::uuid[], 'Sale de los responsables de los gastos fijos');
 
 -- Pero nadie puede "liberar" a mano una fila de otro.
 set local role authenticated;
