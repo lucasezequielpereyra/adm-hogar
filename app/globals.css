@@ -1,26 +1,330 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ──────────────────────────────────────────────────────────────
+   Sistema visual "Hogar": pixel art 16 bits, propio.
+   Unidad de pixel: 3px para contornos, grilla de 4px para espaciado.
+   ────────────────────────────────────────────────────────────── */
 
 @theme inline {
+  --font-sans: var(--font-pixelify), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jersey), var(--font-pixelify), ui-sans-serif, sans-serif;
+  --font-heading: var(--font-display);
+  --font-mono: var(--font-pixelify), ui-monospace, monospace;
+
+  /* tokens propios */
+  --color-cielo: var(--cielo);
+  --color-panel: var(--panel);
+  --color-tinta: var(--tinta);
+  --color-moneda: var(--moneda);
+  --color-pasto: var(--pasto);
+  --color-pasto-ink: var(--pasto-ink);
+  --color-ladrillo: var(--ladrillo);
+  --color-uva: var(--uva);
+
+  /* tokens shadcn */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Día */
+  --cielo: #7cc8f8;
+  --panel: #f7fbff;
+  --tinta: #1b1b2f;
+  --moneda: #f8b800;
+  --pasto: #3fa34d;
+  --pasto-ink: #2e7d3a;
+  --ladrillo: #c2391f;
+  --uva: #6b4bc8;
+  --sombra: rgb(27 27 47 / 0.32);
+  --luz: rgb(255 255 255 / 0.55);
+  --oscuro: rgb(27 27 47 / 0.18);
+
+  --background: #e3f3ff;
+  --foreground: #1b1b2f;
+  --card: var(--panel);
+  --card-foreground: #1b1b2f;
+  --popover: var(--panel);
+  --popover-foreground: #1b1b2f;
+  --primary: var(--moneda);
+  --primary-foreground: #1b1b2f;
+  --secondary: #cfe7fa;
+  --secondary-foreground: #1b1b2f;
+  --muted: #d6e8f7;
+  --muted-foreground: #4a4a68;
+  --accent: #ffe9a6;
+  --accent-foreground: #1b1b2f;
+  --destructive: var(--ladrillo);
+  --border: #1b1b2f;
+  --input: #1b1b2f;
+  --ring: var(--uva);
+  --radius: 0px;
+
+  /* Paleta cerrada de 16 colores (categorías, miembros, tarjetas).
+     Todos tienen contraste ≥ 5.5 con --tinta como texto encima. */
+  --pal-rojo: #f26b5b;
+  --pal-naranja: #f79a3e;
+  --pal-amarillo: #f8d040;
+  --pal-lima: #a8d84e;
+  --pal-verde: #5cc46a;
+  --pal-menta: #4fd1b0;
+  --pal-cian: #45c3e6;
+  --pal-celeste: #8cc8ff;
+  --pal-azul: #6f8cff;
+  --pal-indigo: #9a88ff;
+  --pal-violeta: #c27bea;
+  --pal-magenta: #ee6fc0;
+  --pal-rosa: #ffa5c4;
+  --pal-marron: #c08a5a;
+  --pal-arena: #e3c79a;
+  --pal-gris: #a9b2c3;
+
+  --chart-1: var(--pal-azul);
+  --chart-2: var(--pal-naranja);
+  --chart-3: var(--pal-verde);
+  --chart-4: var(--pal-magenta);
+  --chart-5: var(--pal-amarillo);
+
+  --tierra: #b06a3b;
+  --suelo: url("/sprites/suelo-dia.svg");
+  --tierra-deco: url("/sprites/tierra-dia.svg");
+  --cielo-deco: url("/sprites/nubes.svg");
+}
+
+.dark {
+  /* Noche */
+  --cielo: #1a2350;
+  --panel: #252f5c;
+  --tinta: #0a0d1f;
+  --moneda: #ffc93c;
+  --pasto: #5bc46a;
+  --pasto-ink: #5bc46a;
+  --ladrillo: #ff7a63;
+  --uva: #b39dff;
+  --sombra: rgb(0 0 0 / 0.5);
+  --luz: rgb(255 255 255 / 0.14);
+  --oscuro: rgb(0 0 0 / 0.3);
+
+  --background: #141a33;
+  --foreground: #eaf2ff;
+  --card: var(--panel);
+  --card-foreground: #eaf2ff;
+  --popover: var(--panel);
+  --popover-foreground: #eaf2ff;
+  --primary: var(--moneda);
+  --primary-foreground: #0a0d1f;
+  --secondary: #303b70;
+  --secondary-foreground: #eaf2ff;
+  --muted: #2c3666;
+  --muted-foreground: #a9b6da;
+  --accent: #34407a;
+  --accent-foreground: #eaf2ff;
+  --destructive: var(--ladrillo);
+  --border: #0a0d1f;
+  --input: #0a0d1f;
+  --ring: var(--moneda);
+
+  --tierra: #4a3358;
+  --suelo: url("/sprites/suelo-noche.svg");
+  --tierra-deco: url("/sprites/tierra-noche.svg");
+  --cielo-deco: url("/sprites/estrellas.svg");
+}
+
+/* ── Utilidades pixel ─────────────────────────────────────────── */
+
+/* Color del contorno. No se hereda: un panel con contorno rojo no
+   contagia a los botones que tiene adentro. */
+@property --pixel-outline {
+  syntax: "*";
+  inherits: false;
+}
+
+/* Caja con contorno de 3px y esquinas escalonadas (sin clip-path, para
+   que la sombra dura no se recorte). */
+@utility pixel-box {
+  box-shadow:
+    0 -3px 0 0 var(--pixel-outline, var(--tinta)),
+    0 3px 0 0 var(--pixel-outline, var(--tinta)),
+    -3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 6px 0 0 var(--sombra),
+    6px 3px 0 0 var(--sombra);
+}
+
+/* Igual que pixel-box pero sin sombra (para elementos anidados). */
+@utility pixel-frame {
+  box-shadow:
+    0 -3px 0 0 var(--pixel-outline, var(--tinta)),
+    0 3px 0 0 var(--pixel-outline, var(--tinta)),
+    -3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 0 0 0 var(--pixel-outline, var(--tinta));
+}
+
+/* Bloque presionable: contorno + bisel interno + sombra dura. */
+@utility pixel-block {
+  box-shadow:
+    inset 3px 3px 0 0 var(--luz),
+    inset -3px -3px 0 0 var(--oscuro),
+    0 -3px 0 0 var(--pixel-outline, var(--tinta)),
+    0 3px 0 0 var(--pixel-outline, var(--tinta)),
+    -3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 6px 0 0 var(--sombra),
+    6px 3px 0 0 var(--sombra);
+}
+
+/* Estado presionado del bloque: baja 3px y pierde la sombra. */
+@utility pixel-pressed {
+  transform: translate(3px, 3px);
+  box-shadow:
+    inset 3px 3px 0 0 var(--oscuro),
+    0 -3px 0 0 var(--pixel-outline, var(--tinta)),
+    0 3px 0 0 var(--pixel-outline, var(--tinta)),
+    -3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 0 0 0 var(--pixel-outline, var(--tinta));
+}
+
+/* Campo hundido (inputs). */
+@utility pixel-inset {
+  box-shadow:
+    inset 3px 3px 0 0 var(--oscuro),
+    0 -3px 0 0 var(--pixel-outline, var(--tinta)),
+    0 3px 0 0 var(--pixel-outline, var(--tinta)),
+    -3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 0 0 0 var(--pixel-outline, var(--tinta));
+}
+
+@utility pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Animaciones cuadro a cuadro ──────────────────────────────── */
+
+@keyframes coin-pop {
+  0% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(-28px); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+@keyframes coin-spin {
+  0%, 100% { transform: scaleX(1); }
+  25% { transform: scaleX(0.6); }
+  50% { transform: scaleX(0.15); }
+  75% { transform: scaleX(0.6); }
+}
+
+@keyframes block-bump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes blink-3 {
+  0%, 100% { opacity: 1; }
+  33% { opacity: 0.55; }
+  66% { opacity: 0.8; }
+}
+
+@keyframes zzz {
+  0% { transform: translate(0, 0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(8px, -16px); opacity: 0; }
+}
+
+@utility animate-coin-pop {
+  animation: coin-pop 600ms steps(6) forwards;
+}
+
+@utility animate-coin-spin {
+  animation: coin-spin 800ms steps(4) infinite;
+}
+
+@utility animate-block-bump {
+  animation: block-bump 240ms steps(3);
+}
+
+@utility animate-blink-3 {
+  animation: blink-3 1.2s steps(3) infinite;
+}
+
+@utility animate-zzz {
+  animation: zzz 1.8s steps(6) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 1.4;
+    /* Pixelify Sans tiene una ligadura "fi" que se lee como "A". */
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  :focus-visible {
+    outline: 3px dashed var(--ring);
+    outline-offset: 6px;
+  }
+  /* Los inputs nativos de fecha/número heredan la fuente pixel. */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
 }
