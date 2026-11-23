@@ -217,6 +217,21 @@
     3px 0 0 0 var(--pixel-outline, var(--tinta));
 }
 
+/* Opción elegida (pestañas, toggles): mismo contorno, sombra y posición
+   que pixel-block, pero con el bisel invertido (hundido). No se mueve, así
+   las opciones de un grupo quedan siempre alineadas. */
+@utility pixel-selected {
+  box-shadow:
+    inset 3px 3px 0 0 var(--oscuro),
+    inset -3px -3px 0 0 var(--luz),
+    0 -3px 0 0 var(--pixel-outline, var(--tinta)),
+    0 3px 0 0 var(--pixel-outline, var(--tinta)),
+    -3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 0 0 0 var(--pixel-outline, var(--tinta)),
+    3px 6px 0 0 var(--sombra),
+    6px 3px 0 0 var(--sombra);
+}
+
 /* Campo hundido (inputs). */
 @utility pixel-inset {
   box-shadow:

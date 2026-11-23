@@ -13,8 +13,8 @@ export function LinkTabs({ tabs, active }: { tabs: { href: string; label: string
             href={t.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "inline-flex h-11 flex-1 items-center justify-center px-3 font-semibold pixel-block",
-              isActive ? "bg-moneda text-tinta pixel-pressed" : "bg-panel text-muted-foreground active:pixel-pressed",
+              "inline-flex h-11 flex-1 items-center justify-center px-3 font-semibold",
+              isActive ? "bg-moneda text-tinta pixel-selected" : "bg-panel text-foreground pixel-block active:pixel-pressed",
             )}
           >
             {t.label}
