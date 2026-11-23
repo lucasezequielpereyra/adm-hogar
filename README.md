@@ -192,6 +192,7 @@ supabase/tests/         tests pgTAP
   - Si el resumen anterior está cerrado, tiene gastos y no se marcó como pagado, aparecen las pestañas "Mes anterior" / "Mes en curso".
 - Cada tarjeta se muestra plegada (total, cierre, vencimiento y si está pagada); se abre para ver los gastos, marcar el resumen como pagado o corregir sus fechas.
 - Los totales se separan en **grupales** (compartidos) e **individuales** (tus gastos personales). Los personales de otros miembros no se ven.
+- El gráfico "Por categoría" se filtra por tarjeta y por tipo (todos / grupales / individuales) en el cliente (`features/cards/breakdown.ts`), con el mes anterior como barra fantasma.
 - Los totales se muestran separados por moneda (ARS / USD, sin conversión).
 
 **Tareas:**

@@ -107,23 +107,3 @@ export async function getCardDashboard(householdId: string, today: string, offse
     nextTotals: sumByCurrency(nextRows),
   }
 }
-
-/** Totales por categoría (una moneda) del período actual y del anterior. */
-export function byCategory(currentRows: InstallmentRow[], prevRows: InstallmentRow[], currency: "ARS" | "USD") {
-  const acc = new Map<string, { current: number; prev: number }>()
-  const add = (rows: InstallmentRow[], key: "current" | "prev") => {
-    for (const r of rows) {
-      if (r.currency !== currency) continue
-      const id = r.expense.category_id ?? "none"
-      const e = acc.get(id) ?? { current: 0, prev: 0 }
-      e[key] += Number(r.amount)
-      acc.set(id, e)
-    }
-  }
-  add(currentRows, "current")
-  add(prevRows, "prev")
-  return [...acc.entries()]
-    .map(([categoryId, v]) => ({ categoryId, current: Math.round(v.current), prev: Math.round(v.prev) }))
-    .filter((r) => r.current > 0 || r.prev > 0)
-    .sort((a, b) => b.current - a.current || b.prev - a.prev)
-}

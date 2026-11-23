@@ -8,9 +8,10 @@ import { LinkTabs } from "@/components/shell/link-tabs"
 import { Button } from "@/components/ui/button"
 import { RecategorizeButton } from "@/features/categories/components/recategorize-button"
 import { CardsView } from "@/features/cards/components/cards-view"
-import { CategoryChartLazy as CategoryChart } from "@/features/cards/components/category-chart-lazy"
+import type { BreakdownRow } from "@/features/cards/breakdown"
+import { CategoryBreakdown } from "@/features/cards/components/category-breakdown"
 import type { ExpensePrefill } from "@/features/cards/components/card-expense-form"
-import { byCategory, getCardDashboard, splitTotals, sumByCurrency } from "@/features/cards/queries"
+import { getCardDashboard, splitTotals, sumByCurrency } from "@/features/cards/queries"
 import { getCategories } from "@/features/categories/queries"
 import { todayISO } from "@/lib/domain/dates"
 import { formatAmountInput } from "@/lib/domain/money"
@@ -75,12 +76,16 @@ export default async function TarjetasPage({
 
   const review = sp.revisar === "1"
   const visible = (rows: typeof dash.currentRows) => (review ? rows.filter((r) => r.expense.needs_review) : rows)
-  const categoriesById = new Map(categories.map((c) => [c.id, c]))
-  const chartData = byCategory(dash.currentRows, dash.prevRows, "ARS").map((r) => {
-    const c = categoriesById.get(r.categoryId)
-    return { ...r, name: c?.name ?? "Sin categoría", color: c?.color ?? "gris" }
+  // Para el gráfico por categoría (se filtra por tarjeta y tipo en el cliente).
+  const toBreakdown = (when: "current" | "prev") => (r: (typeof dash.currentRows)[number]): BreakdownRow => ({
+    categoryId: r.expense.category_id,
+    cardId: r.card_id,
+    isPrivate: r.expense.is_private,
+    currency: r.currency,
+    amount: Number(r.amount),
+    when,
   })
-  const usdByCategory = byCategory(dash.currentRows, dash.prevRows, "USD")
+  const breakdownRows = [...dash.currentRows.map(toBreakdown("current")), ...dash.prevRows.map(toBreakdown("prev"))]
 
   const ars = dash.totals.ARS ?? 0
   const prevArs = dash.prevTotals.ARS ?? 0
@@ -202,30 +207,19 @@ export default async function TarjetasPage({
         </dl>
       </Panel>
 
-      {chartData.length > 0 && (
-        <Panel title="Por categoría">
-          <CategoryChart data={chartData} currency="ARS" labels={{ current: "Este mes", prev: "Mes anterior" }} />
-          {usdByCategory.length > 0 && (
-            <div className="mt-4 border-t-[3px] border-tinta/10 pt-3 dark:border-white/10">
-              <p className="mb-2 text-sm font-semibold">En dólares</p>
-              <ul className="flex flex-col gap-1 text-sm">
-                {usdByCategory.map((r) => (
-                  <li key={r.categoryId} className="flex justify-between gap-3">
-                    <span>{categoriesById.get(r.categoryId)?.name ?? "Sin categoría"}</span>
-                    <Money amount={r.current} currency="USD" />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Panel>
+      {dash.currentRows.length > 0 && (
+        <CategoryBreakdown
+          rows={breakdownRows}
+          cards={dash.cards.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
+          categories={categories}
+        />
       )}
 
       <div className="flex flex-wrap items-center gap-3">
         <RecategorizeButton
           entityType="card_expense"
           ids={[...new Set(dash.currentRows.filter((r) => r.expense.category_source !== "user").map((r) => r.expense.id))]}
-          label="Recategorizar el período"
+          label="Recategorizar el mes"
         />
         <ToggleChip
           param="revisar"
