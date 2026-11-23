@@ -3,10 +3,8 @@
 import { cn } from "cn"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { MemberAvatar } from "@/components/pixel/member-chip"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { MemberOption, TaskCategoryNode } from "../types"
-
-const ALL = "__all__"
+import { TaskCategoryFilterPicker } from "./task-category-picker"
 
 export function TaskFilters({
   members,
@@ -21,7 +19,7 @@ export function TaskFilters({
   const pathname = usePathname()
   const params = useSearchParams()
   const member = params.get("miembro")
-  const category = params.get("cat") ?? ALL
+  const category = params.get("cat")
 
   function set(key: string, value: string | null) {
     const next = new URLSearchParams(params)
@@ -65,25 +63,7 @@ export function TaskFilters({
           </button>
         </div>
       )}
-      <Select value={category} onValueChange={(v) => set("cat", v === ALL ? null : v)}>
-        <SelectTrigger aria-label="Filtrar por categoría" size="sm">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>Todas las categorías</SelectItem>
-          {categories.map((root) => (
-            <SelectGroup key={root.id}>
-              <SelectLabel>{root.name}</SelectLabel>
-              <SelectItem value={root.id}>Todo {root.name}</SelectItem>
-              {root.children.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {root.name} › {c.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
+      <TaskCategoryFilterPicker tree={categories} value={category} onChange={(v) => set("cat", v)} />
     </div>
   )
 }

@@ -9,15 +9,7 @@ import { FormField } from "@/components/form/form-field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -25,6 +17,7 @@ import { WEEKDAY_INITIAL, WEEKDAY_NAME, WEEKDAYS_UI } from "@/lib/domain/recurre
 import { deleteTask, saveTask } from "../actions"
 import { FREQUENCY_LABEL, PRIORITY_LABEL, taskSchema, type TaskValues } from "../schemas"
 import type { MemberOption, TaskCategoryNode, TaskItem } from "../types"
+import { TaskCategoryField } from "./task-category-picker"
 
 const NONE = "__none__"
 
@@ -111,25 +104,7 @@ export function TaskForm({
           control={form.control}
           name="task_category_id"
           render={({ field }) => (
-            <Select value={field.value ?? NONE} onValueChange={(v) => field.onChange(v === NONE ? null : v)}>
-              <SelectTrigger id="task-category">
-                <SelectValue placeholder="Sin categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>Sin categoría</SelectItem>
-                {categories.map((root) => (
-                  <SelectGroup key={root.id}>
-                    <SelectLabel>{root.name}</SelectLabel>
-                    <SelectItem value={root.id}>{root.name} (general)</SelectItem>
-                    {root.children.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {root.name} › {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+            <TaskCategoryField id="task-category" tree={categories} value={field.value} onChange={field.onChange} />
           )}
         />
       </FormField>
