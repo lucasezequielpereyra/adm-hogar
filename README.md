@@ -61,11 +61,10 @@ Ver `.env.example`.
 | `NEXT_PUBLIC_SUPABASE_URL` | cliente + servidor | URL del proyecto |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | cliente + servidor | `sb_publishable_…` |
 | `SUPABASE_SECRET_KEY` | **solo servidor** | `sb_secret_…`. Categorización en background, rate limit, logs. Nunca con prefijo `NEXT_PUBLIC_`. |
-| `NEXT_PUBLIC_SITE_URL` | servidor | URL pública |
 | `AUTH_USERNAME_DOMAIN` | servidor | Opcional. Dominio del email interno de las cuentas (default `usuarios.hogar.invalid`). **No lo cambies con cuentas creadas.** |
 | `DEEPSEEK_API_KEY` | **solo servidor** | Sin key, los gastos sin categoría caen en "Sin categorizar" para revisar. |
 | `DEEPSEEK_BASE_URL` | servidor | `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | servidor | Default `deepseek-v4-flash`. Verificalo (ver abajo). |
+| `DEEPSEEK_MODEL` | servidor | Default `deepseek-flash` (V4.1 Flash). Verificalo (ver abajo). |
 | `AI_TIMEOUT_MS` | servidor | Default 5000 |
 | `AI_REVIEW_THRESHOLD` | servidor | Default 0.6 (debajo, el gasto queda "a revisar") |
 | `AI_RATE_LIMIT_PER_MINUTE` / `_PER_DAY` | servidor | Cupo de llamadas al LLM por hogar (20 / 300) |
@@ -73,7 +72,7 @@ Ver `.env.example`.
 ### DeepSeek
 
 1. Creá una API key en https://platform.deepseek.com.
-2. Verificá el nombre del modelo disponible (DeepSeek dio de baja `deepseek-chat` el 24/07/2026 y la documentación usa nombres distintos):
+2. Verificá el nombre del modelo disponible (DeepSeek cambia los nombres seguido; en noviembre de 2026 son `deepseek-flash` y `deepseek-v4-pro`):
    ```bash
    curl https://api.deepseek.com/models -H "Authorization: Bearer $DEEPSEEK_API_KEY"
    ```

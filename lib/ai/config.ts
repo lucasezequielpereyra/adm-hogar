@@ -11,7 +11,7 @@ export function aiConfig() {
   return {
     apiKey: process.env.DEEPSEEK_API_KEY ?? "",
     baseURL: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
-    model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+    model: process.env.DEEPSEEK_MODEL || "deepseek-flash",
     timeoutMs: num(process.env.AI_TIMEOUT_MS, 5000),
     reviewThreshold: Math.min(1, num(process.env.AI_REVIEW_THRESHOLD, 0.6)),
     perMinute: num(process.env.AI_RATE_LIMIT_PER_MINUTE, 20),
