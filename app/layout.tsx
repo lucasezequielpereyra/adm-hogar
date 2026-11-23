@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Jersey_10, Pixelify_Sans } from "next/font/google"
+import { Atkinson_Hyperlegible_Next, Jersey_10 } from "next/font/google"
 import { Providers } from "@/components/providers"
 import "./globals.css"
 
@@ -10,9 +10,10 @@ const jersey = Jersey_10({
   display: "swap",
 })
 
-const pixelify = Pixelify_Sans({
+// Texto: diseñada para máxima legibilidad (I/l/1 y O/0 bien distintas).
+const atkinson = Atkinson_Hyperlegible_Next({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-pixelify",
+  variable: "--font-text",
   display: "swap",
 })
 
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-AR" suppressHydrationWarning className={`${jersey.variable} ${pixelify.variable}`}>
+    <html lang="es-AR" suppressHydrationWarning className={`${jersey.variable} ${atkinson.variable}`}>
       <body className="min-h-dvh">
         <Providers>{children}</Providers>
       </body>

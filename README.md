@@ -215,7 +215,7 @@ supabase/tests/         tests pgTAP
 Pixel art 16 bits **original**: no usa personajes, sprites, tipografías ni sonidos de juegos existentes.
 
 - **Paleta:** día y noche, contraste AA verificado. Hay una paleta cerrada de 16 colores para categorías, miembros y tarjetas; la base guarda la clave del color, no el hex.
-- **Tipografía:** *Jersey 10* (títulos, HUD y montos) y *Pixelify Sans* (texto). Las ligaduras están desactivadas.
+- **Tipografía:** *Jersey 10* (títulos, HUD y montos, el toque pixel) y *Atkinson Hyperlegible Next* (todo el texto: diseñada para máxima legibilidad).
 - **Íconos y sprites:** íconos *pixelarticons* (MIT). Los sprites propios se generan con `pnpm sprites`:
   - los dos michis (el naranja y el negrito)
   - sus caritas

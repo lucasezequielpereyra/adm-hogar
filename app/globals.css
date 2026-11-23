@@ -10,10 +10,11 @@
    ────────────────────────────────────────────────────────────── */
 
 @theme inline {
-  --font-sans: var(--font-pixelify), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-jersey), var(--font-pixelify), ui-sans-serif, sans-serif;
+  /* Texto legible (Atkinson Hyperlegible Next) + display pixel (Jersey 10). */
+  --font-sans: var(--font-text), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jersey), var(--font-text), ui-sans-serif, sans-serif;
   --font-heading: var(--font-display);
-  --font-mono: var(--font-pixelify), ui-monospace, monospace;
+  --font-mono: ui-monospace, monospace;
 
   /* tokens propios */
   --color-cielo: var(--cielo);
@@ -334,11 +335,8 @@
   body {
     @apply bg-background text-foreground;
     font-size: 16px;
-    line-height: 1.4;
-    /* Pixelify Sans tiene una ligadura "fi" que se lee como "A". */
-    font-variant-ligatures: none;
-    font-feature-settings: "liga" 0, "clig" 0;
-    -webkit-font-smoothing: none;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   :focus-visible {

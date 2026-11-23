@@ -36,7 +36,7 @@ export default function EstilosPage() {
           </p>
           <p className="mt-2 font-display text-[28px] leading-none">Compra de noviembre</p>
           <p className="mt-2">
-            Pixelify Sans para el texto: ñandú, acción, ¿pagaste la luz? ¡Listo!
+            Atkinson Hyperlegible Next para el texto: ñandú, acción, ¿pagaste la luz? ¡Listo! Il1 O0
           </p>
           <p className="text-muted-foreground">Texto secundario con contraste suficiente.</p>
         </Panel>
