@@ -196,6 +196,7 @@ supabase/tests/         tests pgTAP
 
 **Gastos fijos:**
 - Pueden tener varios responsables (`responsible_ids`). Un trigger valida que sean miembros del hogar y que un gasto personal solo tenga a su dueño; quien deja el hogar sale de las listas.
+- Resumen del mes por categoría (barra fantasma = mes anterior), con dólares aparte. Lo arma `features/fixed/summary.ts` con las mismas reglas que los totales.
 
 ### Categorización con IA (`lib/ai`)
 
@@ -207,9 +208,15 @@ supabase/tests/         tests pgTAP
      - La respuesta se valida con Zod contra las categorías del hogar.
      - Si la confianza es menor a 0.6, la categoría se asigna igual pero el gasto queda **a revisar**.
    - **Si algo falla** (error, timeout de 5 s, JSON inválido o categoría inexistente), el gasto va a "Sin categorizar" y queda a revisar.
-3. Al corregir una categoría a mano se crea o actualiza la regla y se registra la corrección.
-4. Cada llamada al LLM se guarda en `ai_logs` (modelo, latencia, tokens, error). Lo pueden ver los admins en Más → IA.
-5. "Recategorizar con IA" funciona por gasto (desde el chip) o para todo el período. El cliente lo hace en lotes de 10 contra `/api/ai/recategorize`, que responde 429 si el hogar se queda sin cupo.
+3. **Categorías nuevas (solo gastos fijos compartidos):** si ninguna categoría encaja, el modelo puede proponer una (`new_category`) además de la existente más cercana.
+   - `lib/ai/new-category.ts` sanea la propuesta: largo, comodines como "Otros", ícono válido y color libre.
+   - Antes de crearla se releen las categorías y se reutiliza una equivalente (sin importar tildes, mayúsculas ni plural). Hay un tope de 30.
+   - La categoría queda marcada `created_by_ai`, el gasto queda a revisar y en Más → Categorías dice "Creada por la IA".
+   - No se crean desde gastos personales: una categoría la ve todo el hogar.
+   - Si borrás una categoría creada por la IA, un gasto parecido puede volver a crearla.
+4. Al corregir una categoría a mano se crea o actualiza la regla y se registra la corrección.
+5. Cada llamada al LLM se guarda en `ai_logs` (modelo, latencia, tokens, error). Lo pueden ver los admins en Más → IA.
+6. "Recategorizar con IA" funciona por gasto (desde el chip) o para todo el período. El cliente lo hace en lotes de 10 contra `/api/ai/recategorize`, que responde 429 si el hogar se queda sin cupo.
 
 `categorizeExpense(input, ctx, deps)` es pura (sin DB ni env): el proveedor se inyecta (`CategorizationProvider`). Para cambiar de modelo basta con otra implementación de la interfaz.
 
@@ -235,3 +242,4 @@ Pixel art 16 bits **original**: no usa personajes, sprites, tipografías ni soni
 - Invitar por usuario requiere que la persona ya tenga cuenta; si no, se usa el link o el código.
 - El dominio interno `.invalid` lo probé con Supabase local. Si el proyecto en la nube rechazara esos emails al registrarse, definí `AUTH_USERNAME_DOMAIN` (por ejemplo, un subdominio tuyo que no reciba correo) **antes** de crear cuentas.
 - La PWA funciona online. Sin conexión muestra una página offline: los datos son compartidos y en tiempo real, así que no se cachean.
+- Tirar hacia abajo desde arriba de todo recarga la página (`components/shell/pull-to-refresh.tsx`). No se activa con un drawer o diálogo abierto, ni dentro de una lista scrolleada.

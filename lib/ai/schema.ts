@@ -1,5 +1,12 @@
 import { z } from "zod"
 
+/** Categoría nueva que puede proponer el modelo (se sanea después, ver new-category.ts). */
+const newCategorySchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(500).optional(),
+  icon: z.string().trim().max(40).optional(),
+})
+
 /** Forma que le pedimos al modelo (JSON mode). */
 export const llmResponseSchema = z.object({
   category_id: z.string().trim().min(1),
@@ -8,6 +15,9 @@ export const llmResponseSchema = z.object({
     .string()
     .trim()
     .transform((s) => s.slice(0, 200)),
+  // Opcional: una propuesta inválida se descarta, no invalida la respuesta
+  // (siempre queda la categoría existente elegida).
+  new_category: newCategorySchema.nullable().optional().catch(undefined),
 })
 
 export type LlmResponse = z.infer<typeof llmResponseSchema>

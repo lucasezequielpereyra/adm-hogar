@@ -45,6 +45,7 @@ export function FixedMonthView({
   categories,
   currentUserId,
   defaultCurrency,
+  summary,
 }: {
   items: FixedWithPayment[]
   totals: Totals
@@ -55,6 +56,8 @@ export function FixedMonthView({
   categories: CategoryOption[]
   currentUserId: string
   defaultCurrency: "ARS" | "USD"
+  /** Resumen por categoría (se arma en el servidor). */
+  summary?: React.ReactNode
 }) {
   const [drawer, setDrawer] = useState<DrawerState>(null)
   // Fuera del menú: abrir un diálogo desde un DropdownMenuItem deja el body bloqueado.
@@ -121,6 +124,8 @@ export function FixedMonthView({
           ))}
         </div>
       </Panel>
+
+      {summary}
 
       {soon.length > 0 && (
         <Panel title="Vencen esta semana" tone="alerta">

@@ -19,6 +19,13 @@ describe("parseLlmResponse", () => {
     expect(r.ok && r.value.reason.length).toBe(200)
   })
 
+  it("acepta una categoría nueva propuesta, y descarta una mal formada sin fallar", () => {
+    const ok = parseLlmResponse('{"category_id":"c1","confidence":0.5,"reason":"x","new_category":{"name":"Jardinería","icon":"leaf"}}', ids)
+    expect(ok.ok && ok.value.new_category).toEqual({ name: "Jardinería", icon: "leaf" })
+    const bad = parseLlmResponse('{"category_id":"c1","confidence":0.5,"reason":"x","new_category":"Jardinería"}', ids)
+    expect(bad.ok && bad.value.new_category).toBeUndefined()
+  })
+
   it("rechaza un category_id que no es del hogar", () => {
     const r = parseLlmResponse('{"category_id":"c9","confidence":0.9,"reason":"?"}', ids)
     expect(r).toMatchObject({ ok: false, error: "unknown_category" })

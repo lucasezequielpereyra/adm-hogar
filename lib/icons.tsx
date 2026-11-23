@@ -2,7 +2,7 @@ import {
   Box, Bus, Car, Coffee, CreditCard, Fish, Gamepad, Gift, Heart, Home, Mug, Receipt,
   Shirt, ShoppingBag, ShoppingCart, Sofa, Suitcase, Tv, Zap, BookOpen, CircleQuestion,
   Dog, Drum, Fire, Brush, Spray, Trash, Bed, Coins, Wallet, Tools, Leaf, Scissors,
-  Music, Phone, Wifi, Calendar, BottleWine, Potion, Cake, Moon, Sun, Star, Banknote,
+  Music, Phone, Wifi, Calendar, BottleWine, Potion, Cake, Moon, Sun, Star, Banknote, Shield,
 } from "pixelarticons/react"
 import type { ComponentType, SVGProps } from "react"
 
@@ -65,6 +65,7 @@ export const CATEGORY_ICONS = {
   "book-open": BookOpen,
   suitcase: Suitcase,
   receipt: Receipt,
+  shield: Shield,
   banknote: Banknote,
   coins: Coins,
   wallet: Wallet,

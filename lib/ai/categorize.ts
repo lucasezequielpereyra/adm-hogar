@@ -2,6 +2,7 @@ import { normalizeDescription } from "./normalize"
 import { buildMessages, type ExpenseInput, type FewShotExample, type PromptCategory } from "./prompt"
 import type { CategorizationProvider, CompletionUsage } from "./providers/types"
 import { matchRule, type Rule } from "./rules"
+import type { NewCategoryProposal } from "./new-category"
 import { parseLlmResponse } from "./schema"
 
 export type CategorizeContext = {
@@ -20,6 +21,10 @@ export type CategorizeDeps = {
   maxTokens?: number
   /** Se llama justo antes del LLM (rate limit). false = no hay cupo. */
   beforeLlm?: () => Promise<boolean>
+  /** Deja que el modelo proponga una categoría nueva (solo gastos fijos compartidos). */
+  allowNewCategory?: boolean
+  /** Íconos válidos para una categoría nueva. */
+  iconKeys?: readonly string[]
   now?: () => number
 }
 
@@ -41,6 +46,8 @@ export type CategorizeResult = {
   needsReview: boolean
   normalized: string
   ruleId?: string
+  /** Categoría nueva propuesta por la IA (sin sanear; la crea run.ts). */
+  newCategory?: NewCategoryProposal
   /** Presente si se intentó llamar al LLM (o se descartó por rate limit). */
   log?: CategorizeLog
 }
@@ -102,7 +109,10 @@ export async function categorizeExpense(
   }
 
   // 3. LLM con timeout
-  const { messages, toId } = buildMessages(input, ctx.categories, ctx.examples)
+  const { messages, toId } = buildMessages(input, ctx.categories, ctx.examples, {
+    allowNewCategory: deps.allowNewCategory,
+    iconKeys: deps.iconKeys,
+  })
   const controller = new AbortController()
   const started = now()
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -114,7 +124,11 @@ export async function categorizeExpense(
       }, timeoutMs)
     })
     const completion = await Promise.race([
-      deps.provider.complete(messages, { signal: controller.signal, maxTokens: deps.maxTokens ?? 200 }),
+      deps.provider.complete(messages, {
+        signal: controller.signal,
+        // La propuesta de categoría nueva necesita más espacio.
+        maxTokens: deps.maxTokens ?? (deps.allowNewCategory ? 320 : 200),
+      }),
       timeout,
     ])
     const latencyMs = now() - started
@@ -138,6 +152,7 @@ export async function categorizeExpense(
       reason: parsed.value.reason || null,
       needsReview: confidence < threshold,
       normalized,
+      newCategory: deps.allowNewCategory && parsed.value.new_category ? parsed.value.new_category : undefined,
       log: { ...log, error: null },
     }
   } catch (err) {

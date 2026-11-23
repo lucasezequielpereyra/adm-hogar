@@ -149,6 +149,38 @@ describe("categorizeExpense", () => {
       expect(user.content).toContain("<gasto>")
       expect(user.content).toContain('"descripcion":"DIA TIENDA 512"')
       expect(system.content).not.toContain("uuid-super")
+      expect(system.content).not.toContain("new_category")
+    })
+  })
+
+  describe("categoría nueva", () => {
+    const reply = JSON.stringify({
+      category_id: "c1",
+      confidence: 0.5,
+      reason: "Ninguna encaja.",
+      new_category: { name: "Personal doméstico", description: "Sueldo de empleada doméstica", icon: "brush" },
+    })
+
+    it("si está permitido, pide la propuesta en el prompt y la devuelve junto a la existente más cercana", async () => {
+      const { provider, calls } = fakeProvider(reply)
+      const r = await categorizeExpense({ description: "Sueldo empleada" }, ctx, { provider, allowNewCategory: true, iconKeys: ["brush", "star"] })
+      expect(calls[0][0].content).toContain("new_category")
+      expect(calls[0][0].content).toContain("brush, star")
+      expect(r).toMatchObject({ categoryId: "uuid-super", source: "ai", newCategory: { name: "Personal doméstico", icon: "brush" } })
+    })
+
+    it("si no está permitido, ignora la propuesta", async () => {
+      const { provider } = fakeProvider(reply)
+      const r = await categorizeExpense({ description: "Sueldo empleada" }, ctx, { provider })
+      expect(r.newCategory).toBeUndefined()
+      expect(r.categoryId).toBe("uuid-super")
+    })
+
+    it("una propuesta mal formada no invalida la respuesta", async () => {
+      const { provider } = fakeProvider('{"category_id":"c2","confidence":0.8,"reason":"ok","new_category":{"name":""}}')
+      const r = await categorizeExpense({ description: "X" }, ctx, { provider, allowNewCategory: true })
+      expect(r).toMatchObject({ categoryId: "uuid-delivery", status: "done" })
+      expect(r.newCategory).toBeUndefined()
     })
   })
 })

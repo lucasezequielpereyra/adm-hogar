@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Pencil, Plus, Trash } from "pixelarticons/react"
+import { Pencil, Plus, Sparkles, Trash } from "pixelarticons/react"
 import { useState, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -39,6 +39,11 @@ export function CategoryManager({ categories }: { categories: CategoryOption[] }
               <CategoryIcon category={c} size={28} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="font-semibold">{c.name}</span>
+                {c.created_by_ai && (
+                  <span className="inline-flex items-center gap-1 text-sm text-uva">
+                    <Sparkles className="size-4" aria-hidden /> Creada por la IA
+                  </span>
+                )}
                 {c.description && <span className="line-clamp-2 text-sm text-muted-foreground">{c.description}</span>}
               </span>
               <Pencil className="size-5 shrink-0" aria-hidden />

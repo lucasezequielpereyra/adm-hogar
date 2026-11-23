@@ -185,14 +185,14 @@ isOneToOne: false
                   ]
                 },"categories": {
                   Row: {
-                    "color": string,"created_at": string,"created_by": string | null,"description": string,"household_id": string,"icon": string,"id": string,"is_system": boolean,"name": string,"sort_order": number,"updated_at": string
+                    "color": string,"created_at": string,"created_by": string | null,"created_by_ai": boolean,"description": string,"household_id": string,"icon": string,"id": string,"is_system": boolean,"name": string,"sort_order": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"household_id": string,"icon"?: string,"id"?: string,"is_system"?: boolean,"name": string,"sort_order"?: number,"updated_at"?: string
+                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"created_by_ai"?: boolean,"description"?: string,"household_id": string,"icon"?: string,"id"?: string,"is_system"?: boolean,"name": string,"sort_order"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"household_id"?: string,"icon"?: string,"id"?: string,"is_system"?: boolean,"name"?: string,"sort_order"?: number,"updated_at"?: string
+                    "color"?: string,"created_at"?: string,"created_by"?: string | null,"created_by_ai"?: boolean,"description"?: string,"household_id"?: string,"icon"?: string,"id"?: string,"is_system"?: boolean,"name"?: string,"sort_order"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {

@@ -3,7 +3,10 @@ import { createAdminClient, type AdminClient } from "@/lib/supabase/admin"
 import { categorizeExpense, type CategorizeResult } from "./categorize"
 import { aiConfig, getProvider } from "./config"
 import { ENTITY_SELECT, ENTITY_TABLE, entityInput, type EntityRow, type EntityType } from "./entities"
+import { MAX_CATEGORIES, findEquivalent, normalizeName, pickColor, sanitizeProposal, type NewCategoryProposal } from "./new-category"
 import { normalizeDescription } from "./normalize"
+import { CATEGORY_ICON_KEYS } from "@/lib/icons"
+import { PALETTE_KEYS, type PaletteKey } from "@/lib/palette"
 
 const FEW_SHOT = 20
 
@@ -39,6 +42,64 @@ async function loadContext(admin: AdminClient, householdId: string, ownerId: str
   }
 }
 
+type CreatedCategory = { id: string; name: string; reused: boolean }
+
+/**
+ * Crea (o reutiliza) la categoría que propuso la IA. Relee las categorías
+ * justo antes de insertar: el contexto del prompt puede estar viejo y la
+ * recategorización por lotes corre en paralelo.
+ */
+async function applyNewCategory(admin: AdminClient, householdId: string, proposal: NewCategoryProposal): Promise<CreatedCategory | null> {
+  const p = sanitizeProposal(proposal, CATEGORY_ICON_KEYS)
+  if (!p) return null
+  const { data } = await admin
+    .from("categories")
+    .select("id, name, color, sort_order, is_system")
+    .eq("household_id", householdId)
+  const all = data ?? []
+  const same = findEquivalent(p.name, all)
+  if (same) return same.is_system ? null : { id: same.id, name: same.name, reused: true }
+  const regular = all.filter((c) => !c.is_system)
+  if (regular.length >= MAX_CATEGORIES) return null
+
+  // Va antes de "Otros" (que queda última).
+  const otros = regular.find((c) => normalizeName(c.name) === "otros")
+  const maxOrder = Math.max(0, ...regular.map((c) => c.sort_order))
+  const sortOrder = otros ? otros.sort_order : maxOrder + 1
+
+  const { data: created, error } = await admin
+    .from("categories")
+    .insert({
+      household_id: householdId,
+      name: p.name,
+      description: p.description,
+      icon: p.icon,
+      color: pickColor(
+        all.map((c) => c.color),
+        PALETTE_KEYS,
+      ) as PaletteKey,
+      sort_order: sortOrder,
+      is_system: false,
+      created_by: null,
+      created_by_ai: true,
+    })
+    .select("id, name")
+    .single()
+
+  if (error) {
+    // Otra categorización la creó recién: se usa esa.
+    if (error.code === "23505") {
+      const { data: again } = await admin.from("categories").select("id, name, is_system").eq("household_id", householdId)
+      const found = findEquivalent(p.name, again ?? [])
+      return found && !found.is_system ? { id: found.id, name: found.name, reused: true } : null
+    }
+    console.error("[ai] crear categoría", error)
+    return null
+  }
+  if (otros) await admin.from("categories").update({ sort_order: maxOrder + 1 }).eq("id", otros.id)
+  return { id: created.id, name: created.name, reused: false }
+}
+
 /**
  * Categoriza un gasto en background (después de responder al usuario).
  * Usa la secret key: todas las consultas filtran por household_id.
@@ -59,7 +120,12 @@ export async function runCategorization(
 
   const ctx = await loadContext(admin, row.household_id, row.created_by, row.is_private)
   const cfg = aiConfig()
+  // Solo gastos fijos compartidos: una categoría la ve todo el hogar, así que
+  // crearla desde un gasto personal filtraría su contenido.
+  const allowNewCategory = entityType === "fixed_expense" && !row.is_private
   const result = await categorizeExpense(entityInput(entityType, row), ctx, {
+    allowNewCategory,
+    iconKeys: CATEGORY_ICON_KEYS,
     provider: getProvider(),
     timeoutMs: cfg.timeoutMs,
     reviewThreshold: cfg.reviewThreshold,
@@ -73,6 +139,19 @@ export async function runCategorization(
       return allowed === true
     },
   })
+
+  let createdCategory: CreatedCategory | null = null
+  if (allowNewCategory && result.newCategory && result.source === "ai") {
+    createdCategory = await applyNewCategory(admin, row.household_id, result.newCategory)
+    if (createdCategory) {
+      result.categoryId = createdCategory.id
+      if (!createdCategory.reused) {
+        // Categoría recién creada: queda a revisar para que alguien la confirme.
+        result.needsReview = true
+        result.reason = `Categoría nueva: ${createdCategory.name}. ${result.reason ?? ""}`.trim().slice(0, 300)
+      }
+    }
+  }
 
   // Las tres tablas comparten las columnas de categorización.
   let update = admin
@@ -105,7 +184,13 @@ export async function runCategorization(
       entity_id: entityId,
       source: result.status === "failed" ? "fallback" : result.source,
       input: (result.log.input ?? { normalized: normalizeDescription(entityInput(entityType, row).description) }) as never,
-      output: { raw: result.log.output, categoryId: result.categoryId, confidence: result.confidence, reason: result.reason } as never,
+      output: {
+        raw: result.log.output,
+        categoryId: result.categoryId,
+        confidence: result.confidence,
+        reason: result.reason,
+        ...(result.newCategory ? { newCategory: result.newCategory, createdCategory } : {}),
+      } as never,
       model: result.log.model,
       latency_ms: Math.round(result.log.latencyMs),
       prompt_tokens: result.log.usage?.prompt_tokens ?? null,

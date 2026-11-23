@@ -331,6 +331,8 @@
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
+    /* Sin el "tirar para recargar" del navegador: lo hace la app (PullToRefresh). */
+    overscroll-behavior-y: contain;
   }
   body {
     @apply bg-background text-foreground;

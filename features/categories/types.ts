@@ -1,7 +1,8 @@
 import type { Database } from "@/lib/supabase/database.types"
 
 export type Category = Database["public"]["Tables"]["categories"]["Row"]
-export type CategoryOption = Pick<Category, "id" | "name" | "icon" | "color" | "is_system" | "description">
+export type CategoryOption = Pick<Category, "id" | "name" | "icon" | "color" | "is_system" | "description"> &
+  Partial<Pick<Category, "created_by_ai">>
 
 /** Entidades que tienen categoría de gasto. */
 export const CATEGORIZABLE = {

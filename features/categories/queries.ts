@@ -6,7 +6,7 @@ export async function getCategories(householdId: string): Promise<CategoryOption
   const supabase = await createClient()
   const { data } = await supabase
     .from("categories")
-    .select("id, name, icon, color, is_system, description")
+    .select("id, name, icon, color, is_system, description, created_by_ai")
     .eq("household_id", householdId)
     .order("sort_order")
     .order("name")

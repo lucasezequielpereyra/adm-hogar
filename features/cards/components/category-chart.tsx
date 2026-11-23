@@ -19,7 +19,16 @@ const ROW = 64
  * contorno) = período anterior. El nombre va arriba de cada barra (la
  * identidad nunca depende solo del color) y hay vista en tabla.
  */
-export function CategoryChart({ data: all, currency }: { data: CategoryDatum[]; currency: Currency }) {
+export function CategoryChart({
+  data: all,
+  currency,
+  labels = { current: "Este período", prev: "Período anterior" },
+}: {
+  data: CategoryDatum[]
+  currency: Currency
+  /** Leyenda (en gastos fijos es "Este mes" / "Mes anterior"). */
+  labels?: { current: string; prev: string }
+}) {
   // El gráfico muestra lo gastado este período; lo que solo estuvo en el
   // anterior queda en la tabla.
   const data = all.filter((d) => d.current > 0)
@@ -30,10 +39,10 @@ export function CategoryChart({ data: all, currency }: { data: CategoryDatum[]; 
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-4 text-sm" aria-hidden>
         <span className="inline-flex items-center gap-2">
-          <span className="m-[3px] inline-block h-3 w-5 pixel-frame" style={{ background: "var(--pal-azul)" }} /> Este período
+          <span className="m-[3px] inline-block h-3 w-5 pixel-frame" style={{ background: "var(--pal-azul)" }} /> {labels.current}
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="inline-block h-3 w-5 border-2 border-dashed border-muted-foreground" /> Período anterior
+          <span className="inline-block h-3 w-5 border-2 border-dashed border-muted-foreground" /> {labels.prev}
         </span>
       </div>
       <div style={{ height: data.length * ROW + 8 }} className="w-full [&_.recharts-rectangle]:[shape-rendering:crispEdges]">
@@ -57,7 +66,9 @@ export function CategoryChart({ data: all, currency }: { data: CategoryDatum[]; 
                 return (
                   <div className="bg-panel p-3 text-sm text-foreground pixel-box">
                     <p className="font-semibold">{d.name}</p>
-                    <p>Este período: {money(d.current)}</p>
+                    <p>
+                      {labels.current}: {money(d.current)}
+                    </p>
                     <p className="text-muted-foreground">Anterior: {money(d.prev)}</p>
                     {delta !== null && (
                       <p className="text-muted-foreground">
@@ -109,7 +120,7 @@ export function CategoryChart({ data: all, currency }: { data: CategoryDatum[]; 
           <thead>
             <tr className="text-muted-foreground">
               <th className="py-1 font-normal">Categoría</th>
-              <th className="py-1 text-right font-normal">Este período</th>
+              <th className="py-1 text-right font-normal">{labels.current}</th>
               <th className="py-1 text-right font-normal">Anterior</th>
             </tr>
           </thead>
