@@ -185,7 +185,13 @@ supabase/tests/         tests pgTAP
 **Tarjetas:**
 - `statement_period(fecha, cierre)` define el resumen de cada compra; el cierre 31 se recorta al último día del mes.
 - Un trigger genera las cuotas con centavos exactos: la última absorbe la diferencia.
-- Cada tarjeta tiene su propio "período actual" (el resumen abierto).
+- Cada tarjeta tiene su propio "mes en curso" (el resumen abierto).
+- **Resúmenes por mes (`card_statements`):** cada resumen puede tener su fecha real de cierre y de vencimiento, y si se pagó. Sin fila valen los días de la tarjeta.
+  - Una compra va al primer resumen cuyo cierre es ≥ su fecha (`private.card_statement_period`, gemelo en `lib/domain/periods.ts`). Cambiar un cierre regenera las cuotas afectadas.
+  - El primer gasto de un resumen nuevo pregunta el cierre y el vencimiento, con fechas propuestas (las del resumen anterior un mes después, o las de la tarjeta).
+  - Si el resumen anterior está cerrado, tiene gastos y no se marcó como pagado, aparecen las pestañas "Mes anterior" / "Mes en curso".
+- Cada tarjeta se muestra plegada (total, cierre, vencimiento y si está pagada); se abre para ver los gastos, marcar el resumen como pagado o corregir sus fechas.
+- Los totales se separan en **grupales** (compartidos) e **individuales** (tus gastos personales). Los personales de otros miembros no se ven.
 - Los totales se muestran separados por moneda (ARS / USD, sin conversión).
 
 **Tareas:**
@@ -238,7 +244,8 @@ Pixel art 16 bits **original**: no usa personajes, sprites, tipografías ni soni
 
 ## Limitaciones conocidas
 
-- Cambiar el día de cierre de una tarjeta no mueve los gastos ya cargados.
+- Cambiar el día de cierre de una tarjeta (en Más → Tarjetas) no mueve los gastos ya cargados; corregir la fecha de cierre de un resumen, sí.
+- El total de una tarjeta no incluye los gastos personales de otros miembros, así que puede no coincidir con el resumen del banco.
 - Invitar por usuario requiere que la persona ya tenga cuenta; si no, se usa el link o el código.
 - El dominio interno `.invalid` lo probé con Supabase local. Si el proyecto en la nube rechazara esos emails al registrarse, definí `AUTH_USERNAME_DOMAIN` (por ejemplo, un subdominio tuyo que no reciba correo) **antes** de crear cuentas.
 - La PWA funciona online. Sin conexión muestra una página offline: los datos son compartidos y en tiempo real, así que no se cachean.

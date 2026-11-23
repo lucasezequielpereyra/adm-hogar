@@ -1,8 +1,8 @@
 import "server-only"
 import { addMonthsISO } from "@/lib/domain/dates"
-import { closingDate, statementDueDate, statementPeriod } from "@/lib/domain/periods"
+import { cardStatementPeriod, periodClosing, periodDue } from "@/lib/domain/periods"
 import { createClient } from "@/lib/supabase/server"
-import type { Card, CardPeriod, InstallmentRow, MoneyByCurrency } from "./types"
+import type { Card, CardPeriod, CardStatement, InstallmentRow, MoneyByCurrency } from "./types"
 
 export async function getCards(householdId: string, { activeOnly = false } = {}): Promise<Card[]> {
   const supabase = await createClient()
@@ -12,15 +12,32 @@ export async function getCards(householdId: string, { activeOnly = false } = {})
   return data ?? []
 }
 
-/** Período de cada tarjeta: el resumen abierto hoy + offset meses. */
-export function cardPeriods(cards: Card[], today: string, offset: number): CardPeriod[] {
+/** Resúmenes cargados del hogar (fechas reales y pagos). Son pocos: uno por tarjeta y mes. */
+export async function getStatements(householdId: string): Promise<CardStatement[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("card_statements")
+    .select("*")
+    .eq("household_id", householdId)
+    .order("period", { ascending: false })
+    .limit(1000)
+  return data ?? []
+}
+
+/**
+ * Período de cada tarjeta: el resumen abierto hoy (el primero cuyo cierre
+ * todavía no pasó, con los cierres reales cargados) + offset meses.
+ */
+export function cardPeriods(cards: Card[], statements: CardStatement[], today: string, offset: number): CardPeriod[] {
   return cards.map((card) => {
-    const period = addMonthsISO(statementPeriod(today, card.closing_day), offset)
+    const own = statements.filter((s) => s.card_id === card.id)
+    const period = addMonthsISO(cardStatementPeriod(today, card.closing_day, own), offset)
     return {
       card,
       period,
-      closing: closingDate(period, card.closing_day),
-      due: statementDueDate(period, card.closing_day, card.due_day),
+      closing: periodClosing(period, card.closing_day, own),
+      due: periodDue(period, card.closing_day, card.due_day, own),
+      statement: own.find((s) => s.period === period) ?? null,
     }
   })
 }
@@ -38,6 +55,14 @@ export async function getInstallments(householdId: string, periods: string[]): P
   return (data ?? []) as InstallmentRow[]
 }
 
+/** Totales separados: grupales (compartidos) e individuales (personales; RLS deja solo los propios). */
+export function splitTotals(rows: InstallmentRow[]): { shared: MoneyByCurrency; personal: MoneyByCurrency } {
+  return {
+    shared: sumByCurrency(rows.filter((r) => !r.expense.is_private)),
+    personal: sumByCurrency(rows.filter((r) => r.expense.is_private)),
+  }
+}
+
 export function sumByCurrency(rows: { amount: number | string; currency: string }[]): MoneyByCurrency {
   const out: MoneyByCurrency = {}
   for (const r of rows) {
@@ -52,20 +77,26 @@ export function sumByCurrency(rows: { amount: number | string; currency: string 
  * Cada tarjeta tiene su propio período según su día de cierre.
  */
 export async function getCardDashboard(householdId: string, today: string, offset: number) {
-  const cards = await getCards(householdId)
-  const current = cardPeriods(cards, today, offset)
-  const prev = cardPeriods(cards, today, offset - 1)
-  const next = cardPeriods(cards, today, offset + 1)
+  const [cards, statements] = await Promise.all([getCards(householdId), getStatements(householdId)])
+  const current = cardPeriods(cards, statements, today, offset)
+  const prev = cardPeriods(cards, statements, today, offset - 1)
+  const next = cardPeriods(cards, statements, today, offset + 1)
+  // El último resumen cerrado de cada tarjeta (para saber si falta pagarlo).
+  const lastClosed = cardPeriods(cards, statements, today, -1)
 
-  const rows = await getInstallments(householdId, [...current, ...prev, ...next].map((p) => p.period))
+  const rows = await getInstallments(householdId, [...current, ...prev, ...next, ...lastClosed].map((p) => p.period))
   const pick = (ps: CardPeriod[]) => rows.filter((r) => ps.some((p) => p.card.id === r.card_id && p.period === r.period))
 
   const currentRows = pick(current)
   const prevRows = pick(prev)
   const nextRows = pick(next)
+  const unpaidClosed = lastClosed.filter((p) => !p.statement?.paid_at && rows.some((r) => r.card_id === p.card.id && r.period === p.period))
 
   return {
     cards,
+    statements,
+    /** Hay un resumen cerrado (el anterior al abierto) con gastos y sin marcar como pagado. */
+    unpaidClosed,
     current,
     currentRows,
     prevRows,

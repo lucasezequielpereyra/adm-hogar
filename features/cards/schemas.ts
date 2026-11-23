@@ -30,3 +30,30 @@ export const cardExpenseSchema = z.object({
 })
 
 export type CardExpenseValues = z.infer<typeof cardExpenseSchema>
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida.")
+
+/** Fechas reales de un resumen (mismas reglas que los CHECK de card_statements). */
+export const statementDatesSchema = z
+  .object({
+    period: z.string().regex(/^\d{4}-\d{2}-01$/, "Período inválido."),
+    closing_date: isoDate,
+    due_date: isoDate,
+  })
+  .superRefine((v, ctx) => {
+    const p = new Date(`${v.period}T00:00:00Z`)
+    const min = new Date(p)
+    min.setUTCDate(min.getUTCDate() - 15)
+    const max = new Date(Date.UTC(p.getUTCFullYear(), p.getUTCMonth() + 1, 1))
+    max.setUTCDate(max.getUTCDate() + 15)
+    const closing = new Date(`${v.closing_date}T00:00:00Z`)
+    if (closing < min || closing >= max) {
+      ctx.addIssue({ code: "custom", path: ["closing_date"], message: "El cierre tiene que caer cerca del mes del resumen." })
+    }
+    const due = new Date(`${v.due_date}T00:00:00Z`)
+    const days = (due.getTime() - closing.getTime()) / 86_400_000
+    if (days <= 0) ctx.addIssue({ code: "custom", path: ["due_date"], message: "El vencimiento tiene que ser después del cierre." })
+    else if (days > 45) ctx.addIssue({ code: "custom", path: ["due_date"], message: "El vencimiento no puede ser más de 45 días después del cierre." })
+  })
+
+export type StatementDatesValues = z.infer<typeof statementDatesSchema>

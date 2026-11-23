@@ -170,7 +170,7 @@ export async function CardsSummary({ ctx, today }: { ctx: HouseholdContext; toda
     value: Math.round(v),
   }))
   return (
-    <Panel title="Tarjetas, período actual" action={more("/gastos/tarjetas", "Detalle")}>
+    <Panel title="Tarjetas, mes en curso" action={more("/gastos/tarjetas", "Detalle")}>
       <div className="mb-4 flex flex-wrap items-baseline gap-x-5">
         <Money amount={dash.totals.ARS ?? 0} display decimals={false} className="text-5xl" />
         {dash.totals.USD ? <Money amount={dash.totals.USD} currency="USD" display className="text-3xl" /> : null}

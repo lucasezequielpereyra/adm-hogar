@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Trash } from "pixelarticons/react"
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { FormField } from "@/components/form/form-field"
@@ -18,11 +18,11 @@ import { CategorySelect } from "@/features/categories/components/category-select
 import type { CategoryOption } from "@/features/categories/types"
 import { monthLabel, shortDate } from "@/lib/domain/format"
 import { formatAmountInput, parseAmount } from "@/lib/domain/money"
-import { closingDate, planInstallments } from "@/lib/domain/periods"
+import { cardStatementPeriod, periodClosing, planInstallments, suggestedStatementDates } from "@/lib/domain/periods"
 import { paletteVar } from "@/lib/palette"
 import { deleteCardExpense, saveCardExpense } from "../actions"
-import { cardExpenseSchema, type CardExpenseValues } from "../schemas"
-import type { Card, CardExpense } from "../types"
+import { cardExpenseSchema, statementDatesSchema, type CardExpenseValues } from "../schemas"
+import type { Card, CardExpense, CardStatement } from "../types"
 
 const QUICK_INSTALLMENTS = [1, 3, 6, 12]
 
@@ -32,6 +32,7 @@ export function CardExpenseForm({
   expense,
   prefill,
   cards,
+  statements,
   categories,
   today,
   defaultCurrency,
@@ -40,6 +41,8 @@ export function CardExpenseForm({
   expense: CardExpense | null
   prefill?: ExpensePrefill | null
   cards: Card[]
+  /** Resúmenes cargados (cierres reales), para saber a qué resumen va el gasto. */
+  statements: CardStatement[]
   categories: CategoryOption[]
   today: string
   defaultCurrency: "ARS" | "USD"
@@ -80,9 +83,33 @@ export function CardExpenseForm({
     name: ["card_id", "purchase_date", "amount", "installments_count", "currency"],
   })
   const card = cards.find((c) => c.id === cardId)
+  const own = card ? statements.filter((s) => s.card_id === card.id) : []
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date ?? "")
+
+  // Primer gasto de un resumen nuevo (el abierto o uno futuro) sin fechas
+  // cargadas: se preguntan el cierre y el vencimiento reales.
+  const period = card && validDate ? cardStatementPeriod(date, card.closing_day, own) : null
+  const openPeriod = card ? cardStatementPeriod(today, card.closing_day, own) : null
+  const askDates = !expense && !!card && !!period && !!openPeriod && period >= openPeriod && !own.some((s) => s.period === period)
+  const [datesByKey, setDatesByKey] = useState<Record<string, { closing: string; due: string }>>({})
+  const [datesError, setDatesError] = useState<string | null>(null)
+  const datesKey = `${cardId}|${period}`
+  const suggested = askDates && card && period ? suggestedStatementDates(period, card.closing_day, card.due_day, own) : null
+  const dates = askDates ? (datesByKey[datesKey] ?? suggested) : null
+  const setDates = (patch: Partial<{ closing: string; due: string }>) => {
+    if (!dates) return
+    setDatesError(null)
+    setDatesByKey((m) => ({ ...m, [datesKey]: { ...dates, ...patch } }))
+  }
+  // Con las fechas que se están cargando, para que la vista previa coincida con lo que se guarda.
+  const effective =
+    askDates && period && dates ? [...own, { period, closing_date: dates.closing, due_date: dates.due }] : own
+
   const total = parseAmount(amount)
   const plan =
-    card && date && total && total > 0 && count >= 1 && count <= 60 ? planInstallments(date, card.closing_day, total, count) : null
+    card && validDate && total && total > 0 && count >= 1 && count <= 60
+      ? planInstallments(date, card.closing_day, total, count, effective)
+      : null
 
   if (activeCards.length === 0) {
     return <p>Primero cargá una tarjeta en Más → Tarjetas.</p>
@@ -92,15 +119,24 @@ export function CardExpenseForm({
     <form
       noValidate
       className="flex flex-col gap-5"
-      onSubmit={form.handleSubmit((v) =>
+      onSubmit={form.handleSubmit((v) => {
+        let statement = null
+        if (askDates && period && dates) {
+          const st = statementDatesSchema.safeParse({ period, closing_date: dates.closing, due_date: dates.due })
+          if (!st.success) {
+            setDatesError(st.error.issues[0]?.message ?? "Revisá las fechas del resumen.")
+            return
+          }
+          statement = st.data
+        }
         startTransition(async () => {
-          const res = await saveCardExpense(expense?.id ?? null, v, prefill?.fromPendingId)
+          const res = await saveCardExpense(expense?.id ?? null, v, prefill?.fromPendingId, statement)
           if (res.ok) {
             toast.success(expense ? "Gasto actualizado" : "Gasto cargado")
             onDone()
           } else toast.error(res.error)
-        }),
-      )}
+        })
+      })}
     >
       {prefill?.pendingName && (
         <p className="bg-accent p-3 text-sm pixel-frame mx-[3px]">Desde la compra pendiente “{prefill.pendingName}”.</p>
@@ -190,11 +226,34 @@ export function CardExpenseForm({
         {errors.installments_count?.message && <p className="text-sm text-ladrillo">{errors.installments_count.message}</p>}
       </div>
 
+      {askDates && card && period && dates && (
+        <fieldset className="mx-[3px] flex flex-col gap-3 bg-panel p-3 pixel-frame">
+          <legend className="sr-only">Fechas del resumen</legend>
+          <p className="font-semibold">
+            Primer gasto del resumen de {monthLabel(period).toLowerCase()} de {card.name}: ¿cuándo cierra y cuándo vence?
+          </p>
+          <p className="-mt-2 text-sm text-muted-foreground">Te proponemos estas fechas; corregilas si el banco las cambió.</p>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField id="ce-st-closing" label="Cierra">
+              <Input id="ce-st-closing" type="date" value={dates.closing} onChange={(e) => setDates({ closing: e.target.value })} />
+            </FormField>
+            <FormField id="ce-st-due" label="Vence">
+              <Input id="ce-st-due" type="date" value={dates.due} onChange={(e) => setDates({ due: e.target.value })} />
+            </FormField>
+          </div>
+          {datesError && (
+            <p role="alert" className="text-sm text-ladrillo">
+              {datesError}
+            </p>
+          )}
+        </fieldset>
+      )}
+
       {plan && card && (
         <div className="mx-[3px] flex flex-col gap-1 bg-accent p-3 text-sm pixel-frame" aria-live="polite">
           <span>
             Entra en el resumen de <strong>{monthLabel(plan[0].period).toLowerCase()}</strong> (cierra el{" "}
-            {shortDate(closingDate(plan[0].period, card.closing_day))}).
+            {shortDate(periodClosing(plan[0].period, card.closing_day, effective))}).
           </span>
           {plan.length > 1 && (
             <span>

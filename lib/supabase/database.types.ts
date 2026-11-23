@@ -151,6 +151,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"card_statements": {
+                  Row: {
+                    "card_id": string,"closing_date": string,"created_at": string,"created_by": string | null,"due_date": string,"household_id": string,"id": string,"paid_at": string | null,"paid_by": string | null,"period": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "card_id": string,"closing_date": string,"created_at"?: string,"created_by"?: string | null,"due_date": string,"household_id": string,"id"?: string,"paid_at"?: string | null,"paid_by"?: string | null,"period": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "card_id"?: string,"closing_date"?: string,"created_at"?: string,"created_by"?: string | null,"due_date"?: string,"household_id"?: string,"id"?: string,"paid_at"?: string | null,"paid_by"?: string | null,"period"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "card_statements_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "card_statements_household_id_card_id_fkey"
+      columns: ["household_id","card_id"]
+isOneToOne: false
+      referencedRelation: "cards"
+      referencedColumns: ["household_id","id"]
+    },{
+      foreignKeyName: "card_statements_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "card_statements_paid_by_fkey"
+      columns: ["paid_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"cards": {
                   Row: {
                     "bank": string | null,"closing_day": number,"color": string,"created_at": string,"created_by": string | null,"due_day": number,"holder_id": string | null,"household_id": string,"id": string,"is_active": boolean,"last4": string | null,"name": string,"updated_at": string
