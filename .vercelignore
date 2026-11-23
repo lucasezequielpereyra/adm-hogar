@@ -1,0 +1,9 @@
+# Nunca subir secretos ni artefactos locales en deploys por CLI
+.env*
+!.env.example
+.vercel
+.next
+node_modules
+*.tsbuildinfo
+supabase/.temp
+supabase/.branches
